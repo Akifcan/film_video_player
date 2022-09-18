@@ -1,7 +1,7 @@
 name: film_video_player
 description: A new Flutter package project.
 version: 0.0.1
-homepage:
+homepage: https://github.com/Akifcan/film_video_player
 
 environment:
   sdk: ">=2.17.1 <3.0.0"
