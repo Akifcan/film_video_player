@@ -1,5 +1,5 @@
 name: film_video_player
-description: A new Flutter package project.
+description: Based on video_player package. Provides some styles and listeners.
 version: 0.0.1
 homepage: https://github.com/Akifcan/film_video_player
 
