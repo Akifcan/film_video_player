@@ -1,6 +1,132 @@
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
 import 'package:flutter/services.dart';
+import 'package:video_player/video_player.dart';
+
+
+
+enum VideoOrientationType { fullScreen, normal }
+
+class VideoScreenState {
+  static VideoOrientationType videoOrientation = VideoOrientationType.normal;
+  static bool isPlaying = true;
+  static Duration? currentTime;
+}
+
+
+class FilmPlayerFullScreen extends StatefulWidget {
+  final String title;
+  final Color backgroundColor;
+  final Color progressColor;
+  final bool showVideoDuration;
+  final bool autoPlay;
+  final Duration? startAt;
+  final bool showSuggestedVideosWhenEnd;
+  final Widget? loader;
+  final Widget? errorWidget;
+  final Widget? skipIntroButton;
+  final double radius;
+  final bool showVideos;
+  final String url;
+  final List<Duration>? intro;
+  final List<VideoItem>? videos;
+  final bool useAutoSize;
+  final List<double>? videoSize; // 0 - x, 1- y
+  final Color progressPlayedColor;
+  final Color progressBufferedColor;
+  final Color progressBackgroundColor;
+  final Function(Duration, bool)? seeked;
+  final Function(VideoPlayerController)? loaded;
+  final VoidCallback? onError;
+  final Function(Duration)? playing;
+  final VoidCallback? paused;
+  final VoidCallback? end;
+  final VoidCallback? start;
+  final VoidCallback? onClickVideoPlayer;
+  final Function(VideoItem)? onVideoItemClicked;
+
+  const FilmPlayerFullScreen(
+      {Key? key,
+      this.progressBackgroundColor = const Color.fromRGBO(255, 0, 0, 0.7),
+      this.progressBufferedColor = const Color.fromRGBO(50, 50, 200, 0.2),
+      this.progressPlayedColor = const Color.fromRGBO(200, 200, 200, 0.5),
+      required this.autoPlay,
+      required this.title,
+      this.backgroundColor = Colors.black,
+      this.onClickVideoPlayer,
+      this.showSuggestedVideosWhenEnd = true,
+      this.radius = 10,
+      this.useAutoSize = true,
+      this.progressColor = Colors.blue,
+      this.startAt,
+      this.intro,
+      this.skipIntroButton,
+      this.videos,
+      this.showVideos = false,
+      required this.url,
+      this.videoSize,
+      this.errorWidget,
+      this.loader,
+      this.onError,
+      this.playing,
+      this.paused,
+      this.onVideoItemClicked,
+      this.end,
+      this.seeked,
+      this.loaded,
+      this.start,
+      this.showVideoDuration = true})
+      : super(key: key);
+
+  @override
+  State<FilmPlayerFullScreen> createState() => _FilmPlayerFullScreenState();
+}
+
+class _FilmPlayerFullScreenState extends State<FilmPlayerFullScreen> {
+  @override
+  void initState() {
+    super.initState();
+    SystemChrome.setPreferredOrientations(
+        [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.leanBack);
+  }
+
+  @override
+  void dispose() {
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        body: Stack(
+      fit: StackFit.expand,
+      children: [
+        FilmPlayer(
+          onClickVideoPlayer: widget.onClickVideoPlayer,
+          onError: widget.onError,
+          progressPlayedColor: widget.progressPlayedColor,
+          useAutoSize: widget.useAutoSize,
+          videoSize: const [1, 1],
+          onVideoItemClicked: widget.onVideoItemClicked,
+          startAt: widget.startAt,
+          videos: widget.videos,
+          seeked: widget.seeked,
+          loaded: widget.loaded,
+          playing: widget.playing,
+          end: widget.end,
+          start: widget.start,
+          paused: widget.paused,
+          intro: widget.intro,
+          url: widget.url,
+          autoPlay: widget.autoPlay,
+          title: widget.title,
+          showVideoDuration: widget.showVideoDuration)
+        
+      ],
+    ));
+  }
+}
 
 class VideoItem {
   final String imageSrc;
@@ -22,7 +148,6 @@ class FilmPlayer extends StatefulWidget {
   final Color backgroundColor;
   final Color progressColor;
   final bool showVideoDuration;
-  final bool isFullScreen;
   final bool autoPlay;
   final Duration? startAt;
   final bool showSuggestedVideosWhenEnd;
@@ -47,8 +172,8 @@ class FilmPlayer extends StatefulWidget {
   final VoidCallback? paused;
   final VoidCallback? end;
   final VoidCallback? start;
+  final VoidCallback? onClickVideoPlayer;
   final Function(VideoItem)? onVideoItemClicked;
-  final Function(DeviceOrientation, SystemUiMode)? onRotated;
 
   FilmPlayer(
       {Key? key,
@@ -58,6 +183,7 @@ class FilmPlayer extends StatefulWidget {
       required this.autoPlay,
       required this.title,
       this.backgroundColor = Colors.black,
+      this.onClickVideoPlayer,
       this.showSuggestedVideosWhenEnd = true,
       this.radius = 10,
       this.useAutoSize = true,
@@ -72,7 +198,6 @@ class FilmPlayer extends StatefulWidget {
       this.errorWidget,
       this.loader,
       this.onError,
-      this.onRotated,
       this.playing,
       this.paused,
       this.onVideoItemClicked,
@@ -80,7 +205,6 @@ class FilmPlayer extends StatefulWidget {
       this.seeked,
       this.loaded,
       this.start,
-      this.isFullScreen = false,
       this.showVideoDuration = true})
       : super(key: key) {
     if (useAutoSize == false) {
@@ -99,7 +223,6 @@ class _FilmPlayerState extends State<FilmPlayer> {
   bool isPlaying = false;
   bool isError = false;
   bool isIntroActive = false;
-  late bool isFullScreen;
   late bool showVideos;
   String videoDuration = "";
   late bool showIndicators;
@@ -114,12 +237,6 @@ class _FilmPlayerState extends State<FilmPlayer> {
   void setupVideo(String url) {
     showVideos = widget.showVideos;
     showIndicators = false;
-    isFullScreen = widget.isFullScreen;
-    SystemChrome.setPreferredOrientations(widget.isFullScreen
-        ? [DeviceOrientation.landscapeLeft]
-        : [DeviceOrientation.portraitUp]);
-    SystemChrome.setEnabledSystemUIMode(
-        widget.isFullScreen ? SystemUiMode.leanBack : SystemUiMode.edgeToEdge);
     _controller = VideoPlayerController.network(url)
       ..initialize().then((_) {
         showIndicators = !widget.autoPlay;
@@ -240,21 +357,58 @@ class _FilmPlayerState extends State<FilmPlayer> {
     seekEvent(false);
   }
 
-  void setOrientation() {
-    setState(() {
-      isFullScreen = !isFullScreen;
-    });
-    SystemChrome.setPreferredOrientations(isFullScreen
-        ? [DeviceOrientation.landscapeLeft]
-        : [DeviceOrientation.portraitUp]);
-    SystemChrome.setEnabledSystemUIMode(
-        isFullScreen ? SystemUiMode.immersive : SystemUiMode.edgeToEdge);
-    if (widget.onRotated != null) {
-      widget.onRotated!(
-          isFullScreen
-              ? DeviceOrientation.landscapeLeft
-              : DeviceOrientation.portraitUp,
-          isFullScreen ? SystemUiMode.immersive : SystemUiMode.edgeToEdge);
+  void setOrientation() async {
+    if (VideoScreenState.videoOrientation == VideoOrientationType.normal) {
+      VideoScreenState.videoOrientation = VideoOrientationType.fullScreen;
+      await Navigator.of(context)
+          .push(MaterialPageRoute(
+              builder: (context) => FilmPlayerFullScreen(
+                    backgroundColor: widget.backgroundColor,
+                    progressBufferedColor: widget.progressBackgroundColor,
+                    progressPlayedColor: widget.progressPlayedColor,
+                    autoPlay: true,
+                    title: widget.title,
+                    onClickVideoPlayer: widget.onClickVideoPlayer,
+                    showSuggestedVideosWhenEnd:
+                        widget.showSuggestedVideosWhenEnd,
+                    radius: widget.radius,
+                    useAutoSize: widget.useAutoSize,
+                    progressColor: widget.progressColor,
+                    startAt: _controller.value.position,
+                    intro: widget.intro,
+                    skipIntroButton: widget.skipIntroButton,
+                    videos: widget.videos,
+                    showVideos: widget.showVideos,
+                    errorWidget: widget.errorWidget,
+                    loader: widget.loader,
+                    onError: widget.onError,
+                    playing: widget.playing,
+                    paused: widget.paused,
+                    onVideoItemClicked: widget.onVideoItemClicked,
+                    end: widget.end,
+                    seeked: widget.seeked,
+                    loaded: widget.loaded,
+                    start: widget.start,
+                    showVideoDuration: widget.showVideoDuration,
+                    url: widget.url,
+                  )))
+          .then((value) {
+        if (value['play'] == true) {
+          _controller.play();
+          setState(() {
+            isPlaying = true;
+          });
+        } else {
+          setState(()   {
+            isPlaying = false;
+          });
+        }
+        _controller.seekTo(value['duration']);
+      });
+    } else {
+      VideoScreenState.videoOrientation = VideoOrientationType.normal;
+      Navigator.of(context)
+          .pop({"play": isPlaying, duration: _controller.position});
     }
   }
 
@@ -289,24 +443,23 @@ class _FilmPlayerState extends State<FilmPlayer> {
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(widget.radius),
-      child: widget.useAutoSize && !isFullScreen
+      child: widget.useAutoSize
           ? AspectRatio(
               aspectRatio: _controller.value.aspectRatio,
               child: player,
             )
           : SizedBox(
-              width: isFullScreen
-                  ? MediaQuery.of(context).size.width
-                  : MediaQuery.of(context).size.width * widget.videoSize![0],
-              height: isFullScreen
-                  ? MediaQuery.of(context).size.height
-                  : MediaQuery.of(context).size.height * widget.videoSize![1],
+              width: MediaQuery.of(context).size.width * widget.videoSize![0],
+              height: MediaQuery.of(context).size.height * widget.videoSize![1],
               child: player),
     );
   }
 
   Widget get player => GestureDetector(
         onTap: () {
+          if (widget.onClickVideoPlayer != null) {
+            widget.onClickVideoPlayer!();
+          }
           setState(() {
             showIndicators = !showIndicators;
           });

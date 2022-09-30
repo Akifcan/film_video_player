@@ -42,10 +42,6 @@ class _MyHomePageState extends State<MyHomePage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               FilmPlayer(
-                onRotated: (DeviceOrientation deviceOrientation,
-                    SystemUiMode systemUiMode) {
-                  print("rotated $deviceOrientation $systemUiMode");
-                },
                 onError: () {
                   print("ok");
                 },
