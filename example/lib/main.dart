@@ -1,6 +1,6 @@
 import 'package:film_video_player/film_video_player.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 
 void main() {
@@ -43,15 +43,19 @@ class _MyHomePageState extends State<MyHomePage> {
             children: [
               FilmPlayer(
                 onError: () {
-                  print("ok");
+                  if (kDebugMode) {
+                    print("ok");
+                  }
                 },
                 progressPlayedColor: Colors.blue,
                 useAutoSize: false,
                 videoSize: const [.95, .27],
                 onVideoItemClicked: (VideoItem videoItem) {
-                  print(videoItem.title);
+                  if (kDebugMode) {
+                    print(videoItem.title);
+                  }
                 },
-                videos: [
+                videoItems: [
                   VideoItem(
                       imageSrc:
                           "https://m.media-amazon.com/images/M/MV5BMTUzNTc3MTU3M15BMl5BanBnXkFtZTcwMzIxNTc3NA@@._V1_.jpg",
@@ -82,22 +86,34 @@ class _MyHomePageState extends State<MyHomePage> {
                           "https://freetestdata.com/wp-content/uploads/2022/02/Free_Test_Data_7MB_MP4.mp4"),
                 ],
                 seeked: (duration, isForward) {
-                  print("event:$isForward");
+                  if (kDebugMode) {
+                    print("event:$isForward");
+                  }
                 },
                 loaded: (VideoPlayerController controller) {
-                  print("event:loaded $controller");
+                  if (kDebugMode) {
+                    print("event:loaded $controller");
+                  }
                 },
                 playing: (duration) {
-                  print("event:playing");
+                  if (kDebugMode) {
+                    print("event:playing");
+                  }
                 },
                 end: () {
-                  print("event:video end");
+                  if (kDebugMode) {
+                    print("event:video end");
+                  }
                 },
                 start: () {
-                  print("event:video play");
+                  if (kDebugMode) {
+                    print("event:video play");
+                  }
                 },
                 paused: () {
-                  print("event:paused");
+                  if (kDebugMode) {
+                    print("event:paused");
+                  }
                 },
                 intro: const [Duration(seconds: 5), Duration(seconds: 10)],
                 url:
